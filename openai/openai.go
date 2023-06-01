@@ -22,12 +22,14 @@ type OpenAi struct {
 	model        string
 	temperature  float64
 	context      string
+	maxTokens    int
 }
 
 type Config struct {
 	Model       string
 	Temperature float64
 	Context     string
+	MaxTokens   int
 }
 
 func NewOpenAi(config Config) *OpenAi {
@@ -46,6 +48,7 @@ func NewOpenAi(config Config) *OpenAi {
 		model:        config.Model,
 		temperature:  config.Temperature,
 		context:      config.Context,
+		maxTokens:    config.MaxTokens,
 	}
 
 }
@@ -109,7 +112,7 @@ func (ai *OpenAi) completion(req ChatRequest) (res ChatResponse, err error) {
 	return
 }
 
-func (ai *OpenAi) Chat(message string) (text string, err error) {
+func (ai *OpenAi) Chat(message string) (text string, usage int, err error) {
 
 	var resp ChatResponse
 	resp, err = ai.completion(ChatRequest{
@@ -125,13 +128,15 @@ func (ai *OpenAi) Chat(message string) (text string, err error) {
 			},
 		},
 		Temperature: ai.temperature,
+		MaxTokens:   ai.maxTokens,
 	})
 
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	text = resp.Choices[0].Text
+	text = resp.Choices[0].Message.Content
+	usage = resp.Usage.TotalTokens
 
 	return
 }
